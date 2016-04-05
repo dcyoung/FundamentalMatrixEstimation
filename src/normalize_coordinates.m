@@ -1,20 +1,21 @@
-function [ transform, normCoord ] = normalize_coordinates( coordinates )
+function [ transform, normCoord ] = normalize_coordinates( homoCoord )
 %NORMALIZE_COORDINATES Summary of this function goes here
 %   Detailed explanation goes here
+
+    center = mean(homoCoord(:,1:2)); 
     
-    center = mean(coordinates(:,1:2));
-    %centerVecs = repmat(centers, numCoord,1);
+    offset = eye(3);
+    offset(1,3) = -center(1); %-mu_x
+    offset(2,3) = -center(2); %-mu_y
+
+    sX= max(abs(homoCoord(:,1)));
+    sY= max(abs(homoCoord(:,2)));
     
-    %1 x numCoord matrix where jth entry is squared dist between center
-    %point and the jth coordinate
-    squaredDistances = dist2(center, coordinates(:,1:2));
-    meanSquaredDistance = mean( squaredDistances );
-    scale = 2/meanSquaredDistance;
-    
-    transform = [scale,     0,      -scale*center(1);...
-                    0,      scale,  -scale*center(2);...
-                    0,      0,      1];
+    scale = eye(3);
+    scale(1,1)=1/sX;
+    scale(2,2)=1/sY;          
                 
-    normCoord = (transform * coordinates')';
+    transform = scale * offset;
+    normCoord = (transform * homoCoord')';
 end
 

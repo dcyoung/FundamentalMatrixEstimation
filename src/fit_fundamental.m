@@ -1,12 +1,21 @@
-function [ F ] = fit_fundamental( matches )
+function [ F ] = fit_fundamental( matches, bShouldNormalize )
 %FIT_FUNDAMENTAL Summary of this function goes here
-%   Detailed explanation goes here
+%Output...
+%   F: Fundamental Matrix
+%Inputs...
+%   matches:
+%       This is a N x 4 file where the first two numbers of each row
+%       are coordinates of corners in the first image and the last two
+%       are coordinates of corresponding corners in the second image: 
+%       matches(i,1:2) is a point in the first image
+%       matches(i,3:4) is a corresponding point in the second image
+%   bShouldNormalize:
+%       Whether or not the points should be normalized prior to estimating 
+%       the fundamental matrix
 
-
-    bShouldNormalize = true;
-
-    x1 = homogenize_coordinates( matches(:,1:2) );
-    x2 = homogenize_coordinates( matches(:,3:4) );
+    %homogenize the points
+    x1 = cart_2_homo( matches(:,1:2) );
+    x2 = cart_2_homo( matches(:,3:4) );
     
     if bShouldNormalize
         %The linear system to be solved will have terms that involve a
@@ -16,7 +25,7 @@ function [ F ] = fit_fundamental( matches )
         %practice. So normalize the coordinates, compute F in the
         %normalized coordinates and then adjust it back to the original
         %coordinates later using the normalization transformations
-        display('Normalizing Coordinates');
+        %display('Normalizing Coordinates');
         [transform_1, x1_norm] = normalize_coordinates(x1);
         [transform_2, x2_norm] = normalize_coordinates(x2);
         x1 = x1_norm;
@@ -32,7 +41,7 @@ function [ F ] = fit_fundamental( matches )
     temp = [ u2.*u1, u2.*v1, u2, v2.*u1, v2.*v1, v2, u1, v1, ones(size(matches,1), 1)];
     %Obtain an estimate for F by solving the homogenous linear system using
     %those matches
-    display('Solving homogenous linear system');
+    %display('Solving homogenous linear system');
     [~,~,V] = svd(temp);
     f_vec = V(:,9);
     
@@ -44,7 +53,4 @@ function [ F ] = fit_fundamental( matches )
         %the original coordinates
         F = transform_2' * F * transform_1;
     end
-    
-
-
 end
